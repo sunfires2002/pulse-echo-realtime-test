@@ -38,7 +38,7 @@
   button.dataset.tvKind=kind;button.style.setProperty("--reaction-color",color);button.textContent=label;button.setAttribute("aria-label",label);
   legend.append(button);
  });
- dock.append(legend);shell.append(toolbar);
+ legend.prepend(nameButton);dock.append(legend);shell.append(toolbar);
  // Hide the canvas legend only in TV mode: the five buttons serve as its legend.
  if(window.Chart)Chart.register({id:"pulseTvLegend",beforeUpdate(instance){
   if(instance.canvas.id==="chart"){
@@ -48,15 +48,17 @@
    instance.options.scales.x.offset=active;
   }
  }});
- function setMode(active){
+ function setMode(active,variant="tv"){
   clearStatus();namePanel.hidden=true;refreshName();
-  body.classList.toggle("tv-mode",active);toolbar.hidden=!active;dock.hidden=!active;
+  body.classList.toggle("tv-mode",active);body.classList.toggle("lab-mode",active&&variant==="lab");toolbar.hidden=!active;dock.hidden=!active;
   if(active)dock.append(map);else placeholder.after(map);
-  const url=new URL(location.href);if(active)url.searchParams.set("mode","tv");else url.searchParams.delete("mode");
+  const url=new URL(location.href);if(active)url.searchParams.set("mode",variant);else url.searchParams.delete("mode");
   history.replaceState(null,"",url);
   requestAnimationFrame(()=>{window.dispatchEvent(new Event("resize"));if(typeof chart!=="undefined"&&chart){chart.update("none");chart.resize()}});
   if(!active)enter.focus({preventScroll:true});
+  document.dispatchEvent(new CustomEvent("pulse-view-mode",{detail:{mode:active?variant:"review"}}));
  }
+ window.PULSE_VIEW=Object.freeze({setMode});
  enter.addEventListener("click",()=>setMode(true));
  legend.querySelectorAll(".tv-react").forEach(button=>button.addEventListener("click",()=>{
   const source=button.dataset.tvSource?document.getElementById(button.dataset.tvSource):
